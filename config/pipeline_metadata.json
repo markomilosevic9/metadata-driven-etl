@@ -1,0 +1,398 @@
+{
+  "ingestion": {
+    "source": {
+      "name": "policy_inputs",
+      "path": "s3a://input-data/batch-{date}/input*.jsonl",
+      "format": "json",
+      "required": true,
+      "schema": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "policy_number",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Unique policy identifier"}
+          },
+          {
+            "name": "license_number",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Driver licence number - stable business key for dim_driver"}
+          },
+          {
+            "name": "birth_year",
+            "type": "integer",
+            "nullable": false,
+            "metadata": {"description": "Driver birth year - stable identity attribute"}
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Driver first name"}
+          },
+          {
+            "name": "surname",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Driver surname"}
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Driver city (SCD1)"}
+          },
+          {
+            "name": "country",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Driver country ISO code (SCD1)"}
+          },
+          {
+            "name": "phone_number",
+            "type": "string",
+            "nullable": true,
+            "metadata": {"description": "Contact phone number (SCD1)"}
+          },
+          {
+            "name": "email",
+            "type": "string",
+            "nullable": true,
+            "metadata": {"description": "Contact email (SCD1)"}
+          },
+          {
+            "name": "plate_number",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Vehicle plate business key"}
+          },
+          {
+            "name": "vehicle_type",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Vehicle type"}
+          },
+          {
+            "name": "vehicle_year",
+            "type": "integer",
+            "nullable": false,
+            "metadata": {"description": "Vehicle manufacture year"}
+          },
+          {
+            "name": "vehicle_make",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Vehicle make"}
+          },
+          {
+            "name": "vehicle_model",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Vehicle model"}
+          },
+          {
+            "name": "coverage_type",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Coverage tier"}
+          },
+          {
+            "name": "premium_amount",
+            "type": "double",
+            "nullable": false,
+            "metadata": {"description": "Premium amount"}
+          },
+          {
+            "name": "status",
+            "type": "string",
+            "nullable": false,
+            "metadata": {"description": "Policy status"}
+          }
+        ]
+      },
+      "schema_enforcement": {
+        "enabled": true
+      },
+      "options": {"multiLine": false}
+    },
+    "validations": [
+      {
+        "field": "policy_number",
+        "rules": ["notNull"]
+      },
+      {
+        "field": "license_number",
+        "rules": [
+          "notNull",
+          "notEmpty",
+          {"name": "regex", "params": "^LIC-\\d{6}$"}
+        ]
+      },
+      {
+        "field": "birth_year",
+        "rules": [
+          "notNull",
+          {"name": "minValue", "params": 1940},
+          {"name": "maxValue", "params": 2007}
+        ]
+      },
+      {
+        "field": "name",
+        "rules": ["notNull", "notEmpty"]
+      },
+      {
+        "field": "surname",
+        "rules": ["notNull", "notEmpty"]
+      },
+      {
+        "field": "city",
+        "rules": ["notNull", "notEmpty"]
+      },
+      {
+        "field": "country",
+        "rules": [
+          "notNull",
+          "notEmpty",
+          {"name": "regex", "params": "^(GB|FR|DE|ES|IT|NL)$"}
+        ]
+      },
+      {
+        "field": "phone_number",
+        "rules": [
+          {"name": "regex", "params": "^\\+?[0-9]{10,15}$"}
+        ]
+      },
+      {
+        "field": "email",
+        "rules": [
+          {"name": "regex", "params": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"}
+        ]
+      },
+      {
+        "field": "plate_number",
+        "rules": [
+          "notNull",
+          "notEmpty",
+          {"name": "regex", "params": "^[A-Z0-9-]+$"}
+        ]
+      },
+      {
+        "field": "vehicle_type",
+        "rules": [
+          "notNull",
+          {"name": "regex", "params": "^(sedan|suv|truck)$"}
+        ]
+      },
+      {
+        "field": "vehicle_year",
+        "rules": [
+          "notNull",
+          {"name": "minValue", "params": 1990},
+          {"name": "maxValue", "params": 2026}
+        ]
+      },
+      {
+        "field": "vehicle_make",
+        "rules": ["notNull", "notEmpty"]
+      },
+      {
+        "field": "vehicle_model",
+        "rules": ["notNull", "notEmpty"]
+      },
+      {
+        "field": "coverage_type",
+        "rules": [
+          "notNull",
+          {"name": "regex", "params": "^(basic|standard|premium)$"}
+        ]
+      },
+      {
+        "field": "premium_amount",
+        "rules": [
+          "notNull",
+          {"name": "minValue", "params": 50},
+          {"name": "maxValue", "params": 5000}
+        ]
+      },
+      {
+        "field": "status",
+        "rules": [
+          "notNull",
+          {"name": "regex", "params": "^(active|suspended|cancelled)$"}
+        ]
+      }
+    ]
+  },
+  "scd_defaults": {
+    "scd_sentinel_dates": {
+      "end_date_open": "2099-12-31"
+    }
+  },
+  "dimension_registry": [
+    "dim_policy",
+    "dim_driver",
+    "dim_vehicle",
+    "dim_coverage"
+  ],
+  "dimension_defaults": {
+    "contract_version": "2.0",
+    "input_pattern": "s3a://data-valid/batch-*/output/*.json",
+    "batch_order_column": "source_batch_date",
+    "lineage_columns": [
+      "source_batch_date",
+      "processed_run_id",
+      "ingestion_dt"
+    ]
+  },
+  "dim_policy": {
+    "deduplication": {
+      "enabled": true,
+      "key_column": "policy_number"
+    },
+    "field_renames": {
+      "policy_number": "source_policy_id",
+      "plate_number": "source_vehicle_id",
+      "coverage_type": "source_coverage_id",
+      "license_number": "source_driver_id"
+    },
+    "business_key": "source_policy_id",
+    "dimension_output_path": "s3a://motor-policy-dimensions/dim_policy",
+    "target_table": "dim_policy",
+    "natural_key_columns": [
+      "source_policy_id",
+      "start_date"
+    ],
+    "scd_type_1_fields": [
+      "source_vehicle_id",
+      "source_coverage_id",
+      "source_driver_id"
+    ],
+    "scd_type_2_fields": [
+      "status",
+      "premium_amount"
+    ],
+    "metadata_columns": [
+      "start_date",
+      "end_date",
+      "is_current",
+      "last_updated_run_id"
+    ]
+  },
+  "dim_driver": {
+    "deduplication": {
+      "enabled": true,
+      "key_column": "license_number"
+    },
+    "field_renames": {
+      "license_number": "source_driver_id"
+    },
+    "business_key": "source_driver_id",
+    "dimension_output_path": "s3a://motor-policy-dimensions/dim_driver",
+    "target_table": "dim_driver",
+    "natural_key_columns": [
+      "source_driver_id"
+    ],
+    "scd_type_1_fields": [
+      "city",
+      "country",
+      "phone_number",
+      "email"
+    ],
+    "scd_type_2_fields": [],
+    "non_tracked_fields": [
+      "name",
+      "surname",
+      "birth_year"
+    ],
+    "metadata_columns": [
+      "last_updated_run_id"
+    ]
+  },
+  "dim_vehicle": {
+    "deduplication": {
+      "enabled": true,
+      "key_column": "plate_number"
+    },
+    "field_renames": {
+      "plate_number": "source_vehicle_id"
+    },
+    "business_key": "source_vehicle_id",
+    "dimension_output_path": "s3a://motor-policy-dimensions/dim_vehicle",
+    "target_table": "dim_vehicle",
+    "natural_key_columns": [
+      "source_vehicle_id"
+    ],
+    "non_tracked_fields": [
+      "vehicle_make",
+      "vehicle_model",
+      "vehicle_type",
+      "vehicle_year"
+    ],
+    "metadata_columns": [
+      "last_updated_run_id"
+    ]
+  },
+  "dim_coverage": {
+    "deduplication": {
+      "enabled": true,
+      "key_column": "coverage_type"
+    },
+    "field_renames": {
+      "coverage_type": "source_coverage_id"
+    },
+    "business_key": "source_coverage_id",
+    "dimension_output_path": "s3a://motor-policy-dimensions/dim_coverage",
+    "target_table": "dim_coverage",
+    "natural_key_columns": [
+      "source_coverage_id"
+    ],
+    "non_tracked_fields": [
+      "coverage_description",
+      "coverage_limit_amount",
+      "deductible_amount",
+      "is_active"
+    ],
+    "derived_fields": [
+      {
+        "name": "coverage_description",
+        "expression": "CASE WHEN source_coverage_id = 'basic' THEN 'Basic third-party liability coverage' WHEN source_coverage_id = 'standard' THEN 'Standard comprehensive coverage' WHEN source_coverage_id = 'premium' THEN 'Premium full coverage with roadside' END"
+      },
+      {
+        "name": "coverage_limit_amount",
+        "expression": "CASE WHEN source_coverage_id = 'basic' THEN CAST(10000.0 AS DOUBLE) WHEN source_coverage_id = 'standard' THEN CAST(25000.0 AS DOUBLE) WHEN source_coverage_id = 'premium' THEN CAST(50000.0 AS DOUBLE) END"
+      },
+      {
+        "name": "deductible_amount",
+        "expression": "CASE WHEN source_coverage_id = 'basic' THEN CAST(1000.0 AS DOUBLE) WHEN source_coverage_id = 'standard' THEN CAST(500.0 AS DOUBLE) WHEN source_coverage_id = 'premium' THEN CAST(250.0 AS DOUBLE) END"
+      },
+      {
+        "name": "is_active",
+        "expression": "TRUE"
+      }
+    ],
+    "metadata_columns": [
+      "last_updated_run_id"
+    ]
+  },
+  "star_schema": {
+    "facts": [
+      {
+        "target_table": "fact_policy",
+        "measures": {
+          "annual_premium_amount": {
+            "source": "premium_amount"
+          }
+        }
+      }
+    ]
+  },
+  "dq": {
+    "uniqueness": {
+      "key_columns": [
+        "policy_number"
+      ]
+    }
+  }
+}

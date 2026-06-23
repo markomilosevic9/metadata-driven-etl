@@ -1,0 +1,22 @@
+# grafana datasource provisioning - postgresanalytics
+# points grafana at the postgres-analytics container so DQ metric panels can query dq_run_metrics
+# provisioned automatically on grafana startup 
+
+apiVersion: 1
+
+datasources:
+  - name: PostgresAnalytics
+    type: postgres
+    uid: postgres-analytics
+    access: proxy
+    url: ${POSTGRES_ANALYTICS_HOST}:${POSTGRES_ANALYTICS_PORT}
+    database: ${POSTGRES_ANALYTICS_DB}
+    user: ${POSTGRES_ANALYTICS_USER}
+    secureJsonData:
+      password: ${POSTGRES_ANALYTICS_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1400
+      timescaledb: false
+    isDefault: false
+    editable: false

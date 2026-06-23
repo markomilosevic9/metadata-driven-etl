@@ -1,0 +1,41 @@
+# pipeline configuration
+# application-level settings that should remain consistent across envs
+# references env variables using ${VAR_NAME} syntax
+
+# spark
+spark:
+  master_url: "spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}"
+  app_name: "MotorPolicyPipeline"
+
+  # airflow passes these to SparkSubmitOperator; direct SparkSession runs rely on the image-bundled JARs
+  jars:
+    - "/opt/spark/jars/hadoop-aws-3.3.4.jar"
+    - "/opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar"
+    - "/opt/spark/jars/postgresql-42.6.0.jar"
+
+# minio / object storage
+storage:
+  endpoint: "http://${MINIO_ENDPOINT}"
+  access_key: "${MINIO_ROOT_USER}"
+  secret_key: "${MINIO_ROOT_PASSWORD}"
+  secure: ${MINIO_SECURE}
+  path_style_access: true
+
+  buckets:
+    input: "input-data"
+    output_valid: "data-valid"
+    output_invalid: "data-invalid"
+    dimensions: "motor-policy-dimensions"
+
+# pipeline
+pipeline:
+  metadata_path: "config/pipeline_metadata.json"
+
+# analytics warehouse
+analytics_db:
+  host: "${POSTGRES_ANALYTICS_HOST}"
+  port: ${POSTGRES_ANALYTICS_PORT}
+  database: "${POSTGRES_ANALYTICS_DB}"
+  user: "${POSTGRES_ANALYTICS_USER}"
+  password: "${POSTGRES_ANALYTICS_PASSWORD}"
+  driver: "org.postgresql.Driver"

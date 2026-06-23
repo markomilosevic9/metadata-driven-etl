@@ -1,0 +1,50 @@
+FROM apache/airflow:2.8.1-python3.11
+
+USER root
+
+ARG AIRFLOW_VERSION=2.8.1
+ARG PYTHON_VERSION=3.11
+ARG CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+RUN apt-get update && \
+    JAVA_PKG="openjdk-17-jdk-headless" && \
+    apt-cache show "${JAVA_PKG}" > /dev/null 2>&1 || JAVA_PKG="default-jdk-headless" && \
+    apt-get install -y --no-install-recommends \
+    "${JAVA_PKG}" \
+    curl \
+    netcat-openbsd \
+    sudo \
+    wget && \
+    JAVA_BIN="$(readlink -f "$(command -v java)")" && \
+    JAVA_HOME_DIR="$(dirname "$(dirname "${JAVA_BIN}")")" && \
+    ln -sfn "${JAVA_HOME_DIR}" /usr/lib/jvm/default-java && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+
+USER airflow
+
+COPY requirements.txt /tmp/requirements.txt
+RUN python -m pip install --no-cache-dir \
+    psycopg2-binary \
+    asyncpg \
+    apache-airflow-providers-apache-spark \
+    apache-airflow-providers-smtp \
+    -r /tmp/requirements.txt \
+    --constraint "${CONSTRAINT_URL}"
+
+USER root
+
+RUN PYSPARK_HOME=$(su airflow -c "python -c 'import pyspark, os; print(os.path.dirname(pyspark.__file__))'") && \
+    ln -sfn "$PYSPARK_HOME" /opt/spark && \
+    wget -q -P /opt/spark/jars https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+    wget -q -P /opt/spark/jars https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar && \
+    wget -q -P /opt/spark/jars https://jdbc.postgresql.org/download/postgresql-42.6.0.jar
+
+ENV SPARK_HOME=/opt/spark
+ENV PATH="${SPARK_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
+
+USER airflow
+
+WORKDIR /opt/airflow
